@@ -7,8 +7,10 @@ const {
   deleteUtility,
 } = require("../controllers/utilitiesController");
 
-router.route("/").get(getUtilities).post(setUtility);
+const { protect } = require("../middleware/authMiddleware");
 
-router.route("/:id").put(updateUtility).delete(deleteUtility);
+router.route("/").get(protect, getUtilities).post(protect, setUtility);
+
+router.route("/:id").put(protect, updateUtility).delete(protect, deleteUtility);
 
 module.exports = router;

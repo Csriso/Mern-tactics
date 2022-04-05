@@ -1,13 +1,14 @@
 const asyncHandler = require("express-async-handler");
 
 const Utility = require("../models/utilityModel");
+const User = require("../models/userModel");
 
 // @desc    Get Utilities
 // @route   GET /api/utilities
 // @access  Private
 
 const getUtilities = asyncHandler(async (req, res) => {
-  const utilities = await Utility.find();
+  const utilities = await Utility.find({ user: req.user.id });
 
   res.status(200).json(utilities);
 });
@@ -24,6 +25,7 @@ const setUtility = asyncHandler(async (req, res) => {
 
   const utilities = await Utility.create({
     text: req.body.text,
+    user: req.user.id,
   });
   res.status(200).json(utilities);
 });
@@ -38,6 +40,19 @@ const updateUtility = asyncHandler(async (req, res) => {
   if (!utility) {
     res.status(400);
     throw new Error("Utility not found");
+  }
+  const user = await User.findById(req.user.id);
+
+  // Check for user
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  // Check correct user
+  if (utility.user.toString() !== user.id) {
+    res.status(401);
+    throw new Error("User not authorized");
   }
 
   const updatedUtility = await Utility.findByIdAndUpdate(
@@ -60,6 +75,21 @@ const deleteUtility = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Utility not found");
   }
+
+  const user = await User.findById(req.user.id);
+
+  // Check for user
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  // Check correct user
+  if (utility.user.toString() !== user.id) {
+    res.status(401);
+    throw new Error("User not authorized");
+  }
+
   await utility.remove();
 
   res.status(200).json({ id: req.params.id });
